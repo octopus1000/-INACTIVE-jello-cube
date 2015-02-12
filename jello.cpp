@@ -203,7 +203,6 @@ void display()
   glutSwapBuffers();
 }
 
-int z_counter = 0;
 void doIdle()
 {
   char s[20]="picxxxx.ppm";
@@ -215,10 +214,8 @@ void doIdle()
   s[5] = 48 + (sprite % 100 ) / 10;
   s[6] = 48 + sprite % 10;
 
-  z_counter++;
-  if (/*saveScreenToFile == 1*/ !pause)
+  if (saveScreenToFile == 1)
   {
-	  z_counter = 0;
     saveScreenshot(windowWidth, windowHeight, s);
     saveScreenToFile=0; // save only once, change this if you want continuos image generation (i.e. animation)
     sprite++;
