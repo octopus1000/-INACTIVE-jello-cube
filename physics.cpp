@@ -20,11 +20,7 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
 	vec p, v, *pa = NULL;//p = jello->p[i][j][k], v = jello->v[i][j][k], pa = &(a[i][j][k])
 	vec L = { 0, 0, 0 }, LV = { 0, 0, 0 }, f = { 0, 0, 0 };//L = posA - posB, LV = velocityA - velocityB
 	double R = 0;//rest length
-
-	//hack to protect from corner screwed
-	double pr1, pr2;
 	vec fStruct, fShear, fBend;
-	//hack to protect from corner screwed
 	
 	for (int i = 0; i < 8; i++)
 		for (int j = 0; j < 8; j++)
@@ -37,9 +33,8 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
 				memset(&fStruct, 0, sizeof(vec));
 				memset(&fShear, 0, sizeof(vec));
 				memset(&fBend, 0, sizeof(vec));
-				
-				//Hook's force
-				//compute structural and shear spring force
+
+				/*compute structural and shear spring force*/
 				for (int l = -1; l < 2; l++){
 					for (int m = -1; m < 2; m++){
 						for (int n = -1; n < 2; n++)
@@ -60,7 +55,7 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
 					}
 				}
 				
-				//compute bend spring force
+				/*compute bend spring force*/
 				R = 2;//length equals 2 units
 #define COMPUTEBEND(di,dj,dk) \
 	if(!(i + di < 0 || i + di >7 || j + dj < 0 || j + dj > 7 || k + dk < 0 || k + dk > 7)){\
@@ -80,26 +75,19 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
 				pSUM(*pa, fStruct, *pa);
 				pSUM(*pa, fShear, *pa);
 				pSUM(*pa, fBend, *pa);
-
-
-				//hack to protect from corner screwed				
-				pr1 = pLENGTH(fBend);
-				pr2 = pLENGTH(*pa);
-		
-					if (pr1 > 10. && pr2 < 1.){				//hack to protect from corner screwed
-					pCPY(fBend, *pa);
-				}
-
 				
-				//collision penalty
+				/*compute collision penalty spring force*/
 				collideBox(&p, v, jello->kCollision, jello->dCollision, &f);
 				pSUM(*pa, f, *pa);
+				if (jello->incPlanePresent && collidePlane(jello, p, v, &f)){
+					pSUM(*pa, f, *pa);
+				}
 				
-				//force field
+				/*compute forcefield force*/
 				forceField(jello, &f, p);
 				pSUM(*pa, f, *pa);
 	
-				//user force
+				/*compute mouse drag force*/
 				vec dpos;//user point and current point position delta 
 				pMAKE(i, j, k, dpos);
 				pDIFFERENCE(dpos,z_hitPos,dpos);
@@ -107,8 +95,10 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
 					pMULTIPLY(z_userForce, 1 - pLENGTH(dpos)/4, f);
 					//pMULTIPLY(f, 9.8, f);
 					pSUM(*pa, f, *pa);
-					if (pLENGTH(z_userForce) < 1) 
+					if (pLENGTH(z_userForce) < 1){
 						pMAKE(0., 0., 0., z_userForce);
+					}
+						
 				}
 				pMULTIPLY(*pa, 1.0 / jello->mass, *pa);
 			}
@@ -210,8 +200,25 @@ void collideBox(struct point *p,vec v,double k,double kd,vec *force){
 	COLLIDE(p->z, 2, -1, L.z);
 }
 
-void collidePlane(struct world *jello, struct point p, struct point v){
-	//????????
+/*detect which side the jello is on*/
+/*if return value is true then the jello is on the other side*/
+bool collidePlane(struct world *jello, vec p, vec v, vec *f){
+	bool collide = false;
+	double length,distance,a = jello->a,b = jello->b,c = jello->c,d = jello->d;
+	vec planeNorm,L, LV = v;
+	memset(f, 0, sizeof(vec));
+	if (jello->incPlanePresent){
+		//assume that result > 0 if on the initial side, result < 0 when collide the plane
+		distance = (a*p.x + b*p.y + c*p.z + d) / sqrt(a*a + b*b + c*c);
+		collide = (distance <= 0);
+		if (collide){
+			pMAKE(a, b, c, planeNorm);
+			pNORMALIZE(planeNorm);
+			pMULTIPLY(planeNorm, distance, L);
+			forceSpring(&L, &LV, f, 0, jello->kCollision, jello->dCollision);
+		}
+	}
+	return collide;
 }
 /* performs one step of Euler Integration */
 /* as a result, updates the jello structure */

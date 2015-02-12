@@ -66,13 +66,14 @@ void mouseMotionDrag(int x, int y)
 	  glGetIntegerv(GL_VIEWPORT, viewport);
 	  pMAKE(x, viewport[3] - y - 1, 1., p1);
 	  pMAKE(z_mouseOrigin[0], viewport[3] - z_mouseOrigin[1] - 1, 1, p2);
-	  
 
 	  gluUnProject(p1.x, p1.y, p1.z,
 		  z_mVMat, z_projMat, viewport, &(p1.x), &(p1.y), &(p1.z));
 	  gluUnProject(p2.x, p2.y, p2.z,
 		  z_mVMat, z_projMat, viewport, &(p2.x), &(p2.y), &(p2.z));
 	  pDIFFERENCE(p1,p2, z_userForce);
+	  //z_mouseOrigin[0] = x;
+	  //z_mouseOrigin[1] = y;
   }
 }
 

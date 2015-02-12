@@ -97,7 +97,7 @@ extern struct world jello;
 // macro will change that variable
 
 #define pLENGTH(dest) sqrt((dest).x * (dest).x + (dest).y * (dest).y + (dest).z * (dest).z)
-#define pDOTPRODUCT(src1, src2) (src1).x * (src2).x +  (src1).y * (src2).y  +  (src1).z * (src2).z;
+#define pDOTPRODUCT(src1, src2) (src1).x * (src2).x +  (src1).y * (src2).y  +  (src1).z * (src2).z
 
 #define pNORMALIZE(dest)\
 \

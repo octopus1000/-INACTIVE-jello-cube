@@ -198,9 +198,12 @@ void display()
 
   // show the bounding box
   showBoundingBox();
+  showInclinedPlane(&jello);
  
   glutSwapBuffers();
 }
+
+int z_counter = 0;
 void doIdle()
 {
   char s[20]="picxxxx.ppm";
@@ -211,8 +214,11 @@ void doIdle()
   s[4] = 48 + (sprite % 1000) / 100;
   s[5] = 48 + (sprite % 100 ) / 10;
   s[6] = 48 + sprite % 10;
-  if (saveScreenToFile == 1)
+
+  z_counter++;
+  if (/*saveScreenToFile == 1*/ !pause)
   {
+	  z_counter = 0;
     saveScreenshot(windowWidth, windowHeight, s);
     saveScreenToFile=0; // save only once, change this if you want continuos image generation (i.e. animation)
     sprite++;
@@ -228,8 +234,12 @@ void doIdle()
     // insert code which appropriately performs one step of the cube simulation:
 
 
-	  RK4(&jello);
-	 // system("pause");
+	  if (strcmp(jello.integrator, "Euler") == 0){
+		  Euler(&jello);
+	  }
+	  else{
+		  RK4(&jello);
+	  }
   }
 
   glutPostRedisplay();
@@ -245,6 +255,19 @@ int main (int argc, char ** argv)
   }
 
   readWorld(argv[1],&jello);
+
+  /*if jello is on other side of plane ,flip the plane*/
+  //bellow variables are just for fill arguments
+  vec p, v, f;
+  pCPY(jello.p[0][0][0], p);
+  pCPY(jello.v[0][0][0], v);
+  if (collidePlane(&jello, p, v, &f)){
+	  jello.a = -jello.a;
+	  jello.b = -jello.b;
+	  jello.c = -jello.c;
+	  jello.d = -jello.d;
+  }
+
 
   glutInit(&argc,argv);
   
